@@ -1,14 +1,18 @@
 
 # Instructions for using the code and data files in this repo
-### PLEASE CITE the manuscript if you use any of the available code for your analyses .
-#### citation: Kressler, MM, Trevail, A, Byrnes, E, White, C, Smukall, M, & Sherley, RB. Habitat or safety? Drivers and management implications of juvenile lemon shark space use in mangrove nursery (in prep).
-
-Molly M Kressler
-8 March 2023 
 
 ---
 
-**This document illustrates the workflow for the analyses in the aforementioned manuscript.** 
+## Please cite the manuscript if any code is used. 
+
+See README.md for instructions on how to cite
+
+**citation:** Kressler, MM, Trevail, A, Byrnes, E, White, C, Smukall, M, & Sherley, RB. Habitat or safety? Drivers and management implications of juvenile lemon shark space use in mangrove nursery (in prep).
+
+
+---
+
+**This document details the workflow for the analyses in the aforementioned manuscript.** 
 
 There are **7 .R files** which perform the analyses. There are *two support .R files* which include the code to run supplementary analyses, e.g. a sensitivity anlysis for setting a threshold to classify 'ghost' detections. 
 
@@ -17,6 +21,8 @@ The 7 .R files were written in Sublime Text, on a MacBook, using R version 4.2.0
 The accompanying **data** for the analyses can be found in the folder '**data**'. For a description of the datasets please see the section in this document called 'Data Sets Described for Manuscript 'Habitat or safety? Drivers and management implications of juvenile lemon shark space use in mangrove nursery'. 
 
 All the analyses can be performed using the six provided datasets if the code flow is followed through in its entirety. 
+
+**Code files STEP 1 and STEP 2** may be of particular use to those who wish to **assign areas of shapefiles (e.g. habitat) to biologging detections** of animals which have 'buffers' around them. **Buffers describe the potential location error, e.g. the detection range in acoustic telemetry, where the animal has *equal likelihood of occuring* based on the point-detection**
 
 ---
 
@@ -81,6 +87,7 @@ The data sets will be described in no particular order, for details and attribut
 - Bimini land countours
 	-  provided as a shapefile, ESRI, by Matthew Smukall
 	- open using the 'sf' package in R
+
 
 
 ---
