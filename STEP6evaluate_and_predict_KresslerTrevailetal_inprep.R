@@ -285,8 +285,8 @@ pacman::p_load(tidyverse,ggplot2,gridExtra,lubridate,sf,ggeffects,arm)
 ## (3.2) Plot updated estimates into Core use area from 2.2. 
 	labels<-as_labeller(c('H'='High Tide','L'='Low Tide'))
 	
-	BEFORE50<-pred.hex%>%filter(AIC.m5.use>=0.50)
-		beforedata<-BEFORE50%>%dplyr::select(jcode,tidephase,AIC.m5.use,geometry)
+	BEFORE50<-pred.hex2%>%filter(AIC_m5_use>=0.50)
+		beforedata<-BEFORE50%>%rename(tidephase=tidephs)%>%dplyr::select(jcode,tidephase,AIC_m5_use,geometry)
 		BEFOREdata.low<-beforedata%>%filter(tidephase=='L')
 		BEFOREdata.high<-beforedata%>%filter(tidephase!='H')
 		BEFORE_low_outline<-st_as_sf(st_boundary(st_convex_hull(st_union(BEFOREdata.low))))%>%add_column(tidephase='L')
@@ -294,8 +294,11 @@ pacman::p_load(tidyverse,ggplot2,gridExtra,lubridate,sf,ggeffects,arm)
 		BEFORE_outlines50<-bind_rows(BEFORE_low_outline,BEFORE_high_outline)%>%add_column(refuge='without')%>%add_column(updating='before')%>%add_column(upd='B')
 	
 	# cut the AFTERuse estimates to the use50 area (aka where AIC.m5.use>=50) and plot 
-		AFTER.in.use50<-BEFORE50%>%filter(AIC.m5.use>=0.50)
+		AFTER.in.use50<-BEFORE50%>%filter(AIC_m5_use>=0.50)
 		ggplot()+geom_sf(data=AFTER.in.use50)+theme_bw() # should be grey hexagons around the central mangrove forest 
+
+	# save - these are the predictons after updatign in the before-core use area (50%)
+		st_write(AFTER.in.use50,'preds_AFTER50_in_BEFORE50cureusearea_ghostsremoved_noMtide_april23.shp',driver='ESRI Shapefile')
 
 ## (3.3) Caluclate the new core use area boundary (after updating), and make several plots illustrating the updated/secondary selection, and the before and after boundaries of core use. 
 
@@ -309,6 +312,7 @@ pacman::p_load(tidyverse,ggplot2,gridExtra,lubridate,sf,ggeffects,arm)
 	AFTER_outlines50<-bind_rows(AFTER_low_outline,AFTER_high_outline)%>%add_column(refuge='without')%>%add_column(updating='after')%>%add_column(upd='A')
 	# bind rows and save 
 	outlines50all<-bind_rows(BEFORE_outlines50,AFTER_outlines50)%>%rename(geometry=x)
+
 
 
 	# Supplementary Figure: facetted predictons post-updating selection model averaging 
@@ -339,21 +343,22 @@ pacman::p_load(tidyverse,ggplot2,gridExtra,lubridate,sf,ggeffects,arm)
 ##################
 
 	out<-outlines50.beforeandafter
+pacman::p_load(units)
+	polys<-st_cast(out,'POLYGON')%>%mutate(area.km=set_units(st_area(.),km^2),.before='geometry')
 
-	polys<-st_cast(out,'POLYGON')%>%mutate(area.m=st_area(.),.before='geometry')
 
 	# make it into a flex table. use 'polys', make a table of area with the tidephase and updatign column
-	polys2<-dplyr::select(as.data.frame(polys),-geometry)%>%mutate(area.km=area.m/1000)
+	polys2<-dplyr::select(as.data.frame(polys),-geometry)
 	polys2$area.km<-as.numeric(polys2$area.km)
-	polys2$area.km2<-round(polys2$area.km,0)
-	polys3<-polys2%>%rename('Tide State'= tidephase, Updating = updating, 'Area  '= area.km)
-	ft.area.outlines<-flextable(polys3[,c(1,3,6)])%>%theme_alafoli()%>%align(align = 'center', part = 'all')%>%font(fontname = 'Times', part = 'all')%>%fontsize(size = 11, part = 'all')%>%colformat_double(digits=0)%>%autofit()
-	#save_as_image(ft.area.outlines,path='outlines50_beforeandafterupdating_area.png',webshot='webshot')
+	polys2$area.km2<-round(polys2$area.km,3)
+	polys3<-polys2%>%rename('Tide State'= tidephase, Updating = updating, 'Area (km^2)  '= area.km2)
+	ft.area.outlines<-flextable(polys3[,c(1,3,6)])%>%theme_alafoli()%>%align(align = 'center', part = 'all')%>%font(fontname = 'Times', part = 'all')%>%fontsize(size = 11, part = 'all')%>%colformat_double(digits=3)%>%autofit()
+	#save_as_image(ft.area.outlines,path='habitat_model/no ghosts of 6hr threshold/outlines50_beforeandafterupdating_area.png',webshot='webshot')
 	lowpolys<-polys2%>%filter(tidephase=='L')
 	t.test(lowpolys$area.km) # t = 18.87, df = 1, p-value = 0.0337
 
 
-
+out<-st_as_sf(st_read('habitat_model/no ghosts of 6hr threshold/outlines_of_use50s_beforeANDafter_updating_habselction_good4plotting_ghostsremoved_dec22.shp'))
 
 
 

@@ -3,7 +3,7 @@
 ## final figures from chapter 2 for manuscript, supplementary materials and presentations 
 ## created 19 October 2022 by Molly Kressler
 
-pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm)
+pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm,lubridate,cowplot,patchwork)
 
 ### Regular ggplot2 lines, for consistency
 	+geom_sf(data=land,col='grey72',fill='grey82')
@@ -14,7 +14,6 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm)
 
 ########
 ## - Meta Data Table with durations 
-	pacman::p_load(tidyverse,flextable)
 	meta<-read.csv('biometric_and_metadata_for_habsel_glmers_dec22.csv')%>%dplyr::select(-X)
 	meta_flex<-flextable(meta)%>%set_header_labels(sex = 'Sex',average_duration_hours = 'Average Duration\nbetween Detection (hours)',min_duration_hours = 'Minimum Duration\nbetween Detection (hours)',max_duration_days = 'Maximum Duration\nbetween Detection (days)',days = 'Days at\nLiberty',pcl = 'Pre-Caudal\nLength (cm)')%>%theme_alafoli()%>%align(align = 'center', part = 'all')%>%font(fontname = 'Times', part = 'all')%>%fontsize(size = 10, part = 'all')%>%autofit()
 	meta_flex
@@ -30,9 +29,12 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm)
 		hab.new<-st_as_sf(st_read('clean_habitat_map_bimini_aug22.shp'),crs='WGS84')
 		setwd('/Users/mollykressler/Documents/data_phd/habitat_model')
 		cmg<-st_as_sf(st_read('centroid_mangroves_north.shp'),crs='WSG84')
-		ggplot()+geom_sf(data=hab.new[1])
 
-		figure.hab<-ggplot()+geom_sf(data=hab.new,aes(fill=factor(habitat),col=factor(habitat)))+scale_fill_manual(values=cols,name=NULL,labels=types,aesthetics=c('colour','fill'),position='right')+theme(legend.position=c(.5,.5),legend.text=element_text(size=20),axis.text=element_text(size=20))+theme_bw()+geom_sf(data=cmg,pch=23,size=6,col='#84FF00',fill='#84FF00')+theme(axis.text.x = element_blank(),axis.text.y = element_blank(),axis.ticks=element_blank(),legend.position=c(0.01,0.99),legend.justification=c(0,1))
+		figure.hab<-ggplot()+geom_sf(data=hab.new,aes(fill=factor(habitat),col=factor(habitat)))+
+			scale_fill_manual(values=cols,name=NULL,labels=types,aesthetics=c('colour','fill'),position='right')+
+			theme(legend.position=c(.5,.5),legend.text=element_text(size=20),axis.text=element_text(size=20))+
+			theme_bw()+geom_sf(data=cmg,pch=23,size=6,col='#FFFFFF',fill='#F01D7F')+
+			theme(axis.text.x = element_blank(),axis.text.y = element_blank(),axis.ticks=element_blank(),legend.position=c(0.01,0.99),legend.justification=c(0,1))
 
 		ggsave(figure.hab,file='habitattypes_bimini_map.pdf',device='pdf',units='mm',dpi=1200,height=250,width=200)	
  
@@ -53,10 +55,62 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm)
 			detts.sf$sex<-as_factor(detts.sf$sex)			
 			}
 
-		pacman::p_load(ggsn,lubridate)	
+		base.map<-ggplot()+geom_sf(data=land,fill='grey72',col='grey72')+
+			geom_sf(data=buffs,col=NA,fill='cadetblue3',alpha=0.85)+
+			geom_sf(data=detts.sf,col='black',pch=20)+theme_bw()+
+			north(data=buffs,location='bottomright',scale=0.11,symbol=12)+
+			theme(axis.text=element_text(size=10))
+		ggsave(base.map,file='receiver20192020_bimini_map.pdf',device='pdf',units='mm',dpi=800,height=250,width=200)
 
-		base.map<-ggplot()+geom_sf(data=land,fill='grey72',col='grey72')+geom_sf(data=buffs,col=NA,fill='cadetblue3',alpha=0.85)+geom_sf(data=detts.sf,col='black',pch=20)+theme_bw()+north(data=buffs,location='bottomright',scale=0.11,symbol=12)+theme(axis.text=element_text(size=10))
-		ggsave(base.map,file='receiver20192020_bimini_map.pdf',device='pdf',units='mm',dpi=800,height=250,width=200)	
+
+
+########
+## - map combining habitat and receiver map, different color marker for CMG and inset of Florida and bimini - Vital Heim suggestion	
+	# background = habitat map, foreground = receivers 
+	cols<-c('baresand'='khaki2','lowdensg'='steelblue1','meddensg'='steelblue3','highdensg'='steelblue4','sargassum'='magenta4','lg.sponge'='tan2','inl.vegg'='darkseagreen4','mangrove'='darkgreen','marsh'='darkolivegreen','rocks.urb'='grey70','deep.water'='navyblue') # colours for each habitat type
+	types<-c('baresand'='Bare sand', 'lowdensg'='Low density seagrass', 'meddensg'='Medium density seagrass', 'highdensg'='High density seagrass', 'sargassum'='Sargassum', 'lg.sponge'='Large sponge','inl.vegg'='Inland Vegetation','mangrove'='Mangrove', 'marsh'='Marsh & Inlets', 'rocks.urb'='Rocky or Urban outcrops', 'deep.water'='Deep Water') # formal names for habitat type legend
+
+	hab_with_receivers<-ggplot()+
+		geom_sf(data=hab.new,aes(fill=factor(habitat),col=factor(habitat)))+
+		scale_fill_manual(values=cols,name=NULL,labels=types,aesthetics=c('colour','fill'),position='right')+
+		theme(legend.position=c(.5,.5),legend.text=element_text(size=20),axis.text=element_text(size=20))+
+		geom_sf(data=land,alpha=0,col='grey30')+
+		theme_bw()+
+		geom_sf(data=cmg,pch=23,size=6,col='#FFFFFF',fill='#F01D7F')+
+		theme(axis.text.x = element_blank(),axis.text.y = element_blank(),axis.ticks=element_blank(),legend.position=c(0.01,0.99),axis.text=element_text(size=10),legend.justification=c(0,1))+
+		geom_sf(data=buffs,col=NA,fill='#FFFFFF',alpha=0.65)+
+		geom_sf(data=detts.sf,col='black',pch=20,size=1)
+
+	#inset.map
+	pacman::p_load(rnaturalearth,rnaturalearthdata)
+	usa<-ne_states(country='united states of america')
+	names(usa)
+	usa$abbrev
+	wewant<-c('Fla.','Ga.','S.C.','Ala.','Miss.')
+	south<-st_as_sf(usa)%>%
+		filter(region=='South')%>%
+		dplyr::select(abbrev,geometry)%>%
+		rename(Name=abbrev)%>%
+		filter(Name %in% wewant) # I know this is janky
+	ggplot()+geom_sf(data=land2)+theme_bw()
+	land<-land%>%dplyr::select('Name',geometry)
+	land2<-st_simplify(land)
+	flbm<-bind_rows(south,land2)
+	inset<-ggplot()+geom_sf(data=flbm,col='grey72')+geom_sf(data=flbm,col='grey20',alpha=0)+
+		theme_bw()+
+		theme(axis.text.y = element_blank(),axis.ticks.y = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())+
+		geom_rect(aes(xmin=-79.20,xmax=-79.4,ymin=25.5,ymax=25.9),col='goldenrod2',fill='goldenrod2',alpha=0.4,lwd=.8)
+
+
+	# put it together
+	combohabmap<-ggdraw()+
+		draw_plot(hab_with_receivers)+
+		draw_plot(inset,height=0.2, x=-.32,y=0.03)
+	
+	ggsave(combohabmap,file='habitattypesANDreceiversANDinsetmap_inONE_bimini_map.png',device='png',units='in',dpi=1200,height=9,width=6)	
+
+
+
 
 ######## 
 ## - surfaces from individual habitat type GLMMs
@@ -243,7 +297,7 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm)
 ################
 ## Prediction shapefile and dataframe
 ################
-# the following section rely heavily upon this shapefile. It contains predictiosn calculate in the R code file 'evaluate_and_predict_KresslerTrevailetal_inprep.R'
+# the following section rely heavily upon this shapefile. It contains predictions calculated in the R code file 'evaluate_and_predict_KresslerTrevailetal_inprep.R'
 
 # as a shapefile 
 
@@ -253,13 +307,12 @@ pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_gho
 ######## 
 ## - Habitat Selection, model averaged probability of 'use'
 	# in the ms we are showing only the final result of low tide. 
-		preds_at_low<-pred.hex%>%filter(tidephase=='L')
-
+		preds_at_low<-pred.hex2%>%filter(tidephs=='L')
 
 	# plot it (method 5)
 
-		method5.glmers<-ggplot()+geom_sf(data=pred.hex,aes(fill=AIC.m5.use),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,guide=guide_colourbar(title='Probability of Use'))+facet_grid(cols=vars(tidephase))+theme_minimal()+geom_sf(data=land[3,],fill='gray98')+geom_sf(data=land[4,],fill='gray98')+geom_sf(data=land[2,],fill='gray98')+geom_sf(data=land[1,],fill='gray98')+theme_bw()
-		for_pub_lowonly<-ggplot()+geom_sf(data=preds_at_low,aes(fill=AIC.m5.use),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,guide=guide_colourbar(title='Probability of Use'))+geom_sf(data=land[3,],fill='gray98')+geom_sf(data=land[4,],fill='gray98')+geom_sf(data=land[2,],fill='gray98')+geom_sf(data=land[1,],fill='gray98')+theme_bw()
+		method5.glmers<-ggplot()+geom_sf(data=lowbox,alpha=0,col='#FFFFFF')+geom_sf(data=pred.hex2,aes(fill=AIC_m5_use),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,guide=guide_colourbar(title='Probability of Use'))+facet_grid(cols=vars(tidephs))+theme_minimal()+geom_sf(data=land[3,],fill='gray98')+geom_sf(data=land[4,],fill='gray98')+geom_sf(data=land[2,],fill='gray98')+geom_sf(data=land[1,],fill='gray98')+theme_bw()
+		for_pub_lowonly<-ggplot()+geom_sf(data=pred.hex2,aes(fill=AIC_m5_use),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,guide=guide_colourbar(title='Probability of Use'))+geom_sf(data=land[3,],fill='gray98')+geom_sf(data=land[4,],fill='gray98')+geom_sf(data=land[2,],fill='gray98')+geom_sf(data=land[1,],fill='gray98')+theme_bw()
 
 
 
@@ -272,8 +325,9 @@ pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_gho
 	outlines50all<-st_as_sf(st_read('outlines_of_use50s_beforeANDafter_updating_habselction_good4plotting_ghostsremoved_dec22.shp'))
 
 	# Supplementary Figure: facetted predictons post-updating selection model averaging 
-		selection.in.use50<-ggplot()+geom_sf(data=AFTER50,aes(fill=AFTERuse),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,limits=c(0,1),guide=guide_colourbar(title='Probability of Use'))+facet_grid(cols=vars(tidephase),labeller=(labels))+theme_bw()+geom_sf(data=land,fill='gray98') 
-		selection.in.use50.LOWONLY<-ggplot()+geom_sf(data=AFTER50%>%filter(tidephase=='L'),aes(fill=AFTERuse),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,limits=c(0,1),guide=guide_colourbar(title='Probability of Use'))+theme_bw()+geom_sf(data=land,fill='gray98')+theme(axis.text.y = element_blank(),axis.ticks.y = element_blank())
+		AFTER50<-st_as_sf(st_read('preds_AFTER50_in_BEFORE50cureusearea_ghostsremoved_noMtide_april23.shp'),crs='WGS84')
+		selection.in.use50<-ggplot()+geom_sf(data=AFTER50,aes(fill=AFTERuse),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,limits=c(0,1),guide=guide_colourbar(title='Probability of Use'))+facet_grid(cols=vars(tidephs),labeller=(labels))+theme_bw()+geom_sf(data=land,fill='gray98') 
+		selection.in.use50.LOWONLY<-ggplot()+geom_sf(data=AFTER50%>%filter(tidephs=='L'),aes(fill=AFTERuse),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,limits=c(0,1),guide=guide_colourbar(title='Probability of Use'))+theme_bw()+geom_sf(data=land,fill='gray98')+theme(axis.text.y = element_blank(),axis.ticks.y = element_blank())
 		ggsave(selection.in.use50.LOWONLY,file='updatedselection_ghostsremoved_LOWtideonly_mar23_formultipanel.png',device='png',units='mm',dpi=1200,height=150,width=250)	
 	
 
@@ -287,6 +341,72 @@ pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_gho
 		simplified.extent.50use.beforeANDafterUPDATING.noPreds<-ggplot()+geom_sf(data=land,col='grey72',fill='grey82')+geom_sf(data=lowoutlines50,aes(linetype=upd,col=upd),lwd=1.5)+scale_linetype(labels=c('after','before'),guide=guide_legend(title='Updating'))+scale_color_manual(labels=c('after','before'),values=c('goldenrod2','navyblue'),guide=guide_legend(title='Updating'))+theme_bw() ## for in text results, final figure.
 		ggsave(simplified.extent.50use.beforeANDafterUPDATING.noPreds,file='outlines_habsel_withinUSE50_beforeANDafterUpdating_onlyLOWtide_ghostsremoved_dec22.png',device='png',units='mm',dpi=1200,height=150,width=250)	
 
+
+######## Figure 2 Multi-panel predictions and MPA areas
+## - updated based on feedback on layout from co-A Vital Heim
+
+	# zoom out B (preds in use50 low only) and C (before and after updating boundaries) panels in the multi-panel figure to match the zoom of A (methd5 preds) - April 2023 
+
+		lowbox<-st_as_sf(st_make_valid((st_boundary(st_union(preds_at_low)))))
+		ggplot()+geom_sf(data=lowbox)
+
+	# plot each one with lowbox as the first layer at alpha = 0 
+		# panel A - selection across whole hab
+		for_pub_lowonly<-ggplot()+geom_sf(data=lowbox,alpha=0,col='#FFFFFF')+
+			geom_sf(data=preds_at_low,aes(fill=AIC_m5_use),col=NA)+
+			scale_fill_distiller(palette='RdPu',direction=1,guide=guide_colourbar(title='Probability of Use'))+
+			geom_sf(data=land,col='grey72',fill='grey82')+
+			theme_bw()
+
+		# panel B - selection in (before) use50 
+		selection.in.use50.LOWONLY<-ggplot()+
+			geom_sf(data=lowbox,alpha=0,col='#FFFFFF')+
+			geom_sf(data=AFTER50%>%filter(tidephs=='L'),aes(fill=AFTERuse),col=NA)+
+			geom_sf(data=land,col='grey72',fill='grey82')+
+			scale_fill_distiller(palette='RdPu',direction=1,limits=c(0,1),guide=guide_colourbar(title='Probability of Use'))+
+			theme_bw()+
+			theme(legend.position='bottom')
+
+		# panel C - selection in (before) use50 
+		lowoutlines50<-outlines50all%>%filter(tidephase=='L')
+		simplified.extent.50use.beforeANDafterUPDATING.noPreds<-ggplot()+
+			geom_sf(data=lowbox,alpha=0,col='#FFFFFF')+
+			geom_sf(data=land,col='grey72',fill='grey82')+
+			geom_sf(data=lowoutlines50,aes(linetype=upd,col=upd),lwd=1.5)+
+			scale_linetype(labels=c('after','before'),guide=guide_legend(title='Updating'))+
+			scale_color_manual(labels=c('after','before'),values=c('goldenrod2','navyblue'),guide=guide_legend(title='Updating'))+
+			theme_bw() ## for in text results, final figure.
+
+		## line them up - (1) two rows, (2) one column
+		# (1)
+			a1<-for_pub_lowonly+
+			theme(axis.text.x=element_blank(),axis.ticks.x = element_blank(),legend.position='none')
+			b1<-selection.in.use50.LOWONLY+
+			theme(axis.text.y = element_blank(),axis.ticks.y = element_blank(),legend.position='none')
+			c1<-simplified.extent.50use.beforeANDafterUPDATING.noPreds+
+			theme(legend.position='none')
+
+			legenda<-cowplot::get_legend(a1)
+			legendb<-cowplot::get_legend(selection.in.use50.LOWONLY)
+			legendc<-cowplot::get_legend(simplified.extent.50use.beforeANDafterUPDATING.noPreds)
+			legends<-cowplot::plot_grid(legendb,legendc,align='c',nrow=2)
+
+			panel.figure2<-a1 /c1 | {(b1 / legends)}  + plot_layout(ncol=1,nrow=2, width=c(1),height=c(1,1))& theme(legend.position='none') ## I DID IT
+		ggsave(panel.figure2,file='full A4page_panels_results_habselectionmodels_sharks_bimini_april23.png',device='png',units='mm',dpi=1800,height=200,width=180)	
+
+
+
+		# (2) change theme settings to: theme(axis.text.x = element_blank(),axis.ticks.x = element_blank()) 
+			a2<-for_pub_lowonly+
+			theme(axis.text.x=element_blank(),axis.ticks.x = element_blank(),legend.position='none')
+			b2<-selection.in.use50.LOWONLY+
+			theme(axis.text.x = element_blank(),axis.ticks.x = element_blank(),legend.position='none')
+			c2<-simplified.extent.50use.beforeANDafterUPDATING.noPreds+
+			theme(legend.position='none')
+
+			stacked_panels<-a2/b2/c2+legends
+
+		ggsave(stacked_panels,file='stacked_panels_results_habselectionmodels_sharks_bimini_april23.png',device='png',units='mm',dpi=1200,height=500,width=125)	
 
 
 

@@ -20,7 +20,7 @@ pacman::p_load(sf,tidyverse,ggplot2)
 
 ##################
 ## Make a hexagon grid across study site  
-##################
+##################;
 
 ## make hexagon grid with habitat, and join with unknown habitat shape that captures the excluded buffers 
 
