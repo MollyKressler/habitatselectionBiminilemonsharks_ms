@@ -18,7 +18,7 @@ There are **7 .R files** which perform the analyses. There are *additional suppo
 
 The 7 .R files were written in Sublime Text, on a MacBook, using R version 4.2.0, and can be opened in R or R-Studio, or an alternative text editor, e.g. Visual Studio. 
 
-The accompanying **data** for the analyses can be found in the folder '**data**'. For a description of the datasets please see the section in this document called 'Data Sets Described for Manuscript 'Habitat or safety? Drivers and management implications of juvenile lemon shark space use in mangrove nursery'. 
+Only partial data is provided as per agreements with co-authors. Data is sufficient to run analyses, but final estimates may differ. Please contact Molly Kressler if you wish to discuss. 
 
 All the analyses can be performed using the six provided datasets if the code flow is followed through in its entirety. 
 
@@ -69,8 +69,8 @@ The data sets will be described in no particular order, for details and attribut
 - Detection data
 	- Acoustic telemetry data 
 	- 2019 - 2020
-	- 2019 and part of 2020 provided by Evan Byrnes
-	- part of 2020 provided by Matthew Smukall and Clemency White
+	- 2019 and part of 2020 provided by Evan Byrnes (not available)
+	- part of 2020 provided by Matthew Smukall and Clemency White (available)
 - Habitat data, collected by Drone Adventures in partnerhsip with Save Our Seas Foundation and the Bimini Biological Field Station Foundation: 
 	- provded as a shapefile, ESRI, by Matthew Smukall
 	- open using the 'sf' package in R
