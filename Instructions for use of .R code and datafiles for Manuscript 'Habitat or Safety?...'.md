@@ -14,7 +14,7 @@ See README.md for instructions on how to cite
 
 **This document details the workflow for the analyses in the aforementioned manuscript.** 
 
-There are **7 .R files** which perform the analyses. There are *two support .R files* which include the code to run supplementary analyses, e.g. a sensitivity anlysis for setting a threshold to classify 'ghost' detections. 
+There are **7 .R files** which perform the analyses. There are *additional support .R files* which include the code to run supplementary analyses, e.g. a sensitivity anlysis for setting a threshold to classify 'ghost' detections. For identification, these do not have 'STEP' in their file name.
 
 The 7 .R files were written in Sublime Text, on a MacBook, using R version 4.2.0, and can be opened in R or R-Studio, or an alternative text editor, e.g. Visual Studio. 
 
