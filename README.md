@@ -16,4 +16,4 @@ If you use or find our code helpful in your own analyses and publications, pleas
 
 Code files STEP 1 and STEP 2 may be of particular use to those who wish to assign areas of shapefiles (e.g. habitat) to biologging detections of animals which have 'buffers' around them. Buffers describe the potential location error, e.g. the detection range in acoustic telemetry, where the animal has equal likelihood of occuring based on the point-detection.
 
-
+ 
