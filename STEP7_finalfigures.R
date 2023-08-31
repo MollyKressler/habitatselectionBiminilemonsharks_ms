@@ -30,6 +30,7 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm,lubridate,cowplot,pa
 		setwd('/Users/mollykressler/Documents/data_phd/habitat_model')
 		cmg<-st_as_sf(st_read('centroid_mangroves_north.shp'),crs='WSG84')
 
+
 		figure.hab<-ggplot()+geom_sf(data=hab.new,aes(fill=factor(habitat),col=factor(habitat)))+
 			scale_fill_manual(values=cols,name=NULL,labels=types,aesthetics=c('colour','fill'),position='right')+
 			theme(legend.position=c(.5,.5),legend.text=element_text(size=20),axis.text=element_text(size=20))+
@@ -70,6 +71,17 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm,lubridate,cowplot,pa
 	cols<-c('baresand'='khaki2','lowdensg'='steelblue1','meddensg'='steelblue3','highdensg'='steelblue4','sargassum'='magenta4','lg.sponge'='tan2','inl.vegg'='darkseagreen4','mangrove'='darkgreen','marsh'='darkolivegreen','rocks.urb'='grey70','deep.water'='navyblue') # colours for each habitat type
 	types<-c('baresand'='Bare sand', 'lowdensg'='Low density seagrass', 'meddensg'='Medium density seagrass', 'highdensg'='High density seagrass', 'sargassum'='Sargassum', 'lg.sponge'='Large sponge','inl.vegg'='Inland Vegetation','mangrove'='Mangrove', 'marsh'='Marsh & Inlets', 'rocks.urb'='Rocky or Urban outcrops', 'deep.water'='Deep Water') # formal names for habitat type legend
 
+	allr <- st_as_sf(st_read('biminireceivers_withLocations_20190414to20201213.shp'),crs='WGS84') # all receivers during study interval, with location
+	allr2 <- allr %>% filter(geometry==unique(geometry)) # gets an mapply warning but it's alright.
+	study_area<-st_union(st_make_valid(hab.new))
+	allr3 <- st_intersection(study_area,allr2) # there are some very very far away receivers that are outside the study area by tens of miles. This function will select only the recievers that fall within the study area. 
+	yes <- detts.sf %>% distinct(geometry)%>%
+		dplyr::select('geometry')%>%
+		add_column(sharks = 'yes')
+	no <- st_sf(allr3) %>% add_column(sharks='no') %>% rename(geometry=allr3)
+
+	all <- bind_rows(yes,no) %>% distinct(geometry,.keep_all=TRUE)
+
 	hab_with_receivers<-ggplot()+
 		geom_sf(data=hab.new,aes(fill=factor(habitat),col=factor(habitat)))+
 		scale_fill_manual(values=cols,name=NULL,labels=types,aesthetics=c('colour','fill'),position='right')+
@@ -78,8 +90,8 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm,lubridate,cowplot,pa
 		theme_bw()+
 		geom_sf(data=cmg,pch=23,size=6,col='#FFFFFF',fill='#F01D7F')+
 		theme(axis.text.x = element_blank(),axis.text.y = element_blank(),axis.ticks=element_blank(),legend.position=c(0.01,0.99),axis.text=element_text(size=10),legend.justification=c(0,1))+
-		geom_sf(data=buffs,col=NA,fill='#FFFFFF',alpha=0.65)+
-		geom_sf(data=detts.sf,col='black',pch=20,size=1)
+		geom_sf(data=all%>%filter(sharks=='no'),fill='grey82', col='white',pch=22,size=3)+
+		geom_sf(data=all%>%filter(sharks=='yes'),fill='white', col='grey50',pch=21,size=3)
 
 	#inset.map
 	pacman::p_load(rnaturalearth,rnaturalearthdata)
@@ -93,10 +105,12 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm,lubridate,cowplot,pa
 		rename(Name=abbrev)%>%
 		filter(Name %in% wewant) # I know this is janky
 	ggplot()+geom_sf(data=land2)+theme_bw()
+	
 	land<-land%>%dplyr::select('Name',geometry)
-	land2<-st_simplify(land)
-	flbm<-bind_rows(south,land2)
-	inset<-ggplot()+geom_sf(data=flbm,col='grey72')+geom_sf(data=flbm,col='grey20',alpha=0)+
+	land2<- st_zm(land,drop=TRUE)
+	flbm<-bind_rows(land2,south)
+	inset <-ggplot()+
+		geom_sf(data=flbm,col='grey72')+
 		theme_bw()+
 		theme(axis.text.y = element_blank(),axis.ticks.y = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())+
 		geom_rect(aes(xmin=-79.20,xmax=-79.4,ymin=25.5,ymax=25.9),col='goldenrod2',fill='goldenrod2',alpha=0.4,lwd=.8)
@@ -300,7 +314,7 @@ pacman::p_load(sf,tidyverse,ggplot2,gridExtra,flextable,arm,lubridate,cowplot,pa
 # the following section rely heavily upon this shapefile. It contains predictions calculated in the R code file 'evaluate_and_predict_KresslerTrevailetal_inprep.R'
 
 # as a shapefile 
-
+setwd('/Users/mollykressler/Documents/data_phd/habitat_model/no ghosts of 6hr threshold')
 pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_ghostsremoved_glmers_dec22_updatedhabitat.shp'))%>%rename(AFTERuse=AFTERus,AIC_m5_use=AIC_m5_)
 
 
@@ -309,6 +323,8 @@ pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_gho
 	# in the ms we are showing only the final result of low tide. 
 		preds_at_low<-pred.hex2%>%filter(tidephs=='L')
 
+		lowbox<-st_as_sf(st_make_valid((st_boundary(st_union(preds_at_low)))))
+		ggplot()+geom_sf(data=lowbox)
 	# plot it (method 5)
 
 		method5.glmers<-ggplot()+geom_sf(data=lowbox,alpha=0,col='#FFFFFF')+geom_sf(data=pred.hex2,aes(fill=AIC_m5_use),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,guide=guide_colourbar(title='Probability of Use'))+facet_grid(cols=vars(tidephs))+theme_minimal()+geom_sf(data=land[3,],fill='gray98')+geom_sf(data=land[4,],fill='gray98')+geom_sf(data=land[2,],fill='gray98')+geom_sf(data=land[1,],fill='gray98')+theme_bw()
@@ -318,7 +334,6 @@ pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_gho
 
 ######## 
 ## - Updating Habitat Selection, accounting for strong selection for refugia
-	setwd('/Users/mollykressler/Documents/data_phd/habitat_model/no ghosts of 6hr threshold')
 
 	# outlines/boundaries data file
 
@@ -328,18 +343,18 @@ pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_gho
 		AFTER50<-st_as_sf(st_read('preds_AFTER50_in_BEFORE50cureusearea_ghostsremoved_noMtide_april23.shp'),crs='WGS84')
 		selection.in.use50<-ggplot()+geom_sf(data=AFTER50,aes(fill=AFTERuse),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,limits=c(0,1),guide=guide_colourbar(title='Probability of Use'))+facet_grid(cols=vars(tidephs),labeller=(labels))+theme_bw()+geom_sf(data=land,fill='gray98') 
 		selection.in.use50.LOWONLY<-ggplot()+geom_sf(data=AFTER50%>%filter(tidephs=='L'),aes(fill=AFTERuse),col=NA)+scale_fill_distiller(palette='RdPu',direction=1,limits=c(0,1),guide=guide_colourbar(title='Probability of Use'))+theme_bw()+geom_sf(data=land,fill='gray98')+theme(axis.text.y = element_blank(),axis.ticks.y = element_blank())
-		ggsave(selection.in.use50.LOWONLY,file='updatedselection_ghostsremoved_LOWtideonly_mar23_formultipanel.png',device='png',units='mm',dpi=1200,height=150,width=250)	
+		#ggsave(selection.in.use50.LOWONLY,file='updatedselection_ghostsremoved_LOWtideonly_mar23_formultipanel.png',device='png',units='mm',dpi=1200,height=150,width=250)	
 	
 
 	# supplementary figure: outlines pre/post updating at High and Low tide facetted. 
 		extent.50use.beforeANDafterUPDATING.noPreds<-ggplot()+geom_sf(data=land,col='grey72',fill='grey82')+geom_sf(data=outlines50all,aes(linetype=upd,col=upd),lwd=1.2)+scale_linetype(labels=c('after','before'),guide=guide_legend(title='Updating'))+scale_color_manual(labels=c('after','before'),values=c('goldenrod2','navyblue'),guide=guide_legend(title='Updating'))+facet_grid(cols=vars(tidephase),labeller=(labels))+theme_bw() ## separate for high and low tide, good for supplementary materials. 
 		
-		ggsave(extent.50use.beforeANDafterUPDATING.noPreds,file='outlines_habsel_withinUSE50_beforeANDafterUpdating_LOWandHIGHtide_ghostsremoved_dec22.png',device='png',units='mm',dpi=1200,height=150,width=250)	
+		#ggsave(extent.50use.beforeANDafterUPDATING.noPreds,file='outlines_habsel_withinUSE50_beforeANDafterUpdating_LOWandHIGHtide_ghostsremoved_dec22.png',device='png',units='mm',dpi=1200,height=150,width=250)	
  
 	# results figure: pre/ppst updated minimum convex hull outline of area where selection was greater than or equal to 50%. Data shown here is for the low tide results, as this was the most conservative. 
 		lowoutlines50<-outlines50all%>%filter(tidephase=='L')
 		simplified.extent.50use.beforeANDafterUPDATING.noPreds<-ggplot()+geom_sf(data=land,col='grey72',fill='grey82')+geom_sf(data=lowoutlines50,aes(linetype=upd,col=upd),lwd=1.5)+scale_linetype(labels=c('after','before'),guide=guide_legend(title='Updating'))+scale_color_manual(labels=c('after','before'),values=c('goldenrod2','navyblue'),guide=guide_legend(title='Updating'))+theme_bw() ## for in text results, final figure.
-		ggsave(simplified.extent.50use.beforeANDafterUPDATING.noPreds,file='outlines_habsel_withinUSE50_beforeANDafterUpdating_onlyLOWtide_ghostsremoved_dec22.png',device='png',units='mm',dpi=1200,height=150,width=250)	
+		#ggsave(simplified.extent.50use.beforeANDafterUPDATING.noPreds,file='outlines_habsel_withinUSE50_beforeANDafterUpdating_onlyLOWtide_ghostsremoved_dec22.png',device='png',units='mm',dpi=1200,height=150,width=250)	
 
 
 ######## Figure 2 Multi-panel predictions and MPA areas
@@ -406,9 +421,13 @@ pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_gho
 
 			stacked_panels<-a2/b2/c2+legends
 
-		ggsave(stacked_panels,file='stacked_panels_results_habselectionmodels_sharks_bimini_april23.png',device='png',units='mm',dpi=1200,height=500,width=125)	
+			# VH would prefer the Pr(use) legend underneath the first two, and the Updatign legend after the third. Going to try to reconfigure plot (2).
+				# legenda = Pr(use)
+				# legendc = Updating 
+			stacked_panels2<-a2/b2/legendb/c2/legendc + plot_layout(heights=c(4,4,1,4,1)) 
 
-
+		ggsave(stacked_panels2,file='stacked_panels_results_habselectionmodels_sharks_bimini_april23.png',device='png',units='mm',dpi=1200,height=500,width=125)	
+ 
 
 ######## 
 ## - AIC weights tables, before and after updating for the 6 then 5 models
@@ -435,7 +454,10 @@ pred.hex2<-st_as_sf(st_read('habitatmodel_preds_method5_withANDwithoutREFUGE_gho
 	# rename models to match manuscript formatting. refuge = 8, meddensg=3, bare ssand =1, sargassum = 5, urban = 6, deep water = 7, 
 	df5<-df4%>%mutate(Model=case_when(Model=='refuge'~8,Model=='medensg'~3,Model=='baresand'~1,Model=='sargassum'~5,Model=='urban'~6,Model=='deepwater'~7,))%>%rename(Before=before,After=after)
 	df5$Model<-as.character(df5$Model)
-	aics.updating<-flextable(df5)%>%theme_alafoli()%>%align(align = 'center', part = 'all')%>%font(fontname = 'Times', part = 'all')%>%fontsize(size = 11, part = 'all')%>%colformat_double(digits = 8) %>%autofit()
+	aics.updating<-flextable(df5)%>%theme_alafoli()
+	%>%align(align = 'center', part = 'all')%>%
+	font(fontname = 'Times', part = 'all')%>%
+	fontsize(size = 11, part = 'all')%>%colformat_double(digits = 8) %>%autofit()
 	save_as_image(aics.updating,'aic__models_dec22_glmers_beforeAfterUpdating.png',webshot='webshot2')
 
 
