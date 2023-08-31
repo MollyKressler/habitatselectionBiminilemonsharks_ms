@@ -1,6 +1,6 @@
 # PLEASE CITE the manuscript if you use any of the available code for your analyses .
 
-### citation: Kressler, MM, Trevail, A, Byrnes, E, White, C, Smukall, M, & Sherley, RB. Habitat or safety? Drivers and management implications of juvenile lemon shark space use in mangrove nursery (in prep).
+### citation: Kressler, MM, Byrnes, E, Trevail, A, White, C, Smukall, M, & Sherley, RB. Habitat Selection and Spatial Behaviour of Vulnerable Juvenile Lemon Sharks: Implications for Conservation (in prep).
 
 ---
 
