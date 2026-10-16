@@ -11,7 +11,7 @@ Implications for conservation. Ecological Indicators, 166, 112239. DOI:
 
 There is an instruction markdown file whch describes the order of the R code files and the datasets required to run the full analyses in the manuscript. The file is available in the repo. 
 
-If you use or find our code helpful in your own analyses and publications, please cite our manuscript. DOI: 10.1016/j.ecolind.2024.112239 
+If you use or find our code helpful in your own analyses and publications, please cite our manuscript. DOI: 10.1016/j.ecolind.2024.112239 [![DOI](https://zenodo.org/badge/608611399.svg)](https://doi.org/10.1016/j.ecolind.2024.112239)
 
 Zenodo DOI for this repository: [![DOI](https://zenodo.org/badge/608611399.svg)](https://doi.org/10.5281/zenodo.23414932)
 
